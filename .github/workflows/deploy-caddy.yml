@@ -1,0 +1,58 @@
+name: Deploy Caddy
+run-name: ${{ github.actor }} is deploying Caddy
+
+on: workflow_dispatch
+
+jobs:
+  deploy-next:
+    name: Deploy NextJS
+    runs-on: ubuntu-latest
+
+    env:
+      NEXT_PUBLIC_GESTOR_DE_INFORMES_GESTION_AMBIENTAL_API: ${{ vars.GESTOR_DE_INFORMES_GESTION_AMBIENTAL_API }}
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Show vars
+        run: echo $NEXT_PUBLIC_GESTOR_DE_INFORMES_GESTION_AMBIENTAL_API
+
+      - name: Run
+        run: docker compose config
+
+  deploy-caddy:
+    name: Deploy Caddy
+    runs-on: ubuntu-latest
+
+    env:
+      PFX_PASSWORD: ${{ secrets.PFX_PASSWORD }}
+      PFX_BASE64: ${{ secrets.PFX_BASE64 }}
+      PFX_FILE: certificates.pfx
+      FILENAME: cert
+
+    steps:
+      - uses: actions/checkout@v4
+      - name: Decode pfx to a file
+        run: echo $PFX_BASE64 | base64 --decode > $PFX_FILE
+
+      - name: Extract crt to a file
+        run: |
+          openssl pkcs12 \
+            -in $PFX_FILE \
+            -nokeys \
+            -nodes \
+            -clcerts \
+            -passin env:PFX_PASSWORD \
+          | openssl x509 -out "${FILENAME}.crt"
+
+      - name: Extract key to a file
+        run: |
+          openssl pkcs12 \
+            -in $PFX_FILE \
+            -nocerts \
+            -nodes \
+            -passin env:PFX_PASSWORD \
+          | openssl rsa -out "${FILENAME}.key"
+
+      - name: ----
+        run: |
+          docker compose up

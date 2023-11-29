@@ -1,0 +1,36 @@
+version: "3.9"
+
+services:
+  frontend:
+    build: .
+    environment:
+      - NEXT_PUBLIC_GESTOR_DE_INFORMES_GESTION_AMBIENTAL_API
+
+  caddy:
+    image: caddy:latest
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+
+    ports:
+      - "443:443"
+      - "443:443/udp"
+
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_config:/config
+      - caddy_data:/data
+
+    secrets:
+      - crt
+      - key
+
+secrets:
+  crt:
+    file: ./cert.crt
+  key:
+    file: ./cert.key
+
+volumes:
+  caddy_config:
+  caddy_data:

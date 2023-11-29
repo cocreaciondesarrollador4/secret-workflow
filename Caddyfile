@@ -1,0 +1,4 @@
+:443 {
+  tls /run/secrets/crt /run/secrets/key
+  respond "Hello, there"
+}
